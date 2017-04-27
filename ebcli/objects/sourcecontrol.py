@@ -37,6 +37,7 @@ class SourceControl():
 
     def get_name(self):
         return None
+
     def get_current_branch(self):
         pass
 
