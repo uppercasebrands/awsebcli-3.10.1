@@ -37,7 +37,6 @@ class SourceControl():
 
     def get_name(self):
         return None
-
     def get_current_branch(self):
         pass
 
@@ -222,7 +221,26 @@ class Git(SourceControl):
         LOG.debug('git rev-parse --verify HEAD result: ' + stdout)
         return stdout
 
-    def do_zip(self, location, staged=False):
+    def do_zip_submodule(self, main_location, sub_location, staged=False, submodule_dir=None):
+        if staged:
+            commit_id, stderr, exitcode = _run_cmd(
+                ['git', 'write-tree'])
+        else:
+            commit_id = 'HEAD'
+        io.log_info('creating zip using git submodule archive ' + commit_id)
+
+        # individually zip submodules if there are any
+        stdout, stderr, exitcode = _run_cmd(
+            ['git', 'archive', '-v', '--format=zip',
+             '--prefix', os.path.join(submodule_dir, ''),
+             '-o', sub_location, commit_id])
+        io.log_info('git archive output: ' + stderr)
+        
+        # append and remove the submodule archive
+        fileoperations.zip_append_archive(main_location, sub_location)
+        fileoperations.delete_file(sub_location)
+
+    def do_zip(self, location, staged=False, submodule=False):
         cwd = os.getcwd()
         try:
             # must be in project root for git archive to work.
@@ -233,11 +251,22 @@ class Git(SourceControl):
                     ['git', 'write-tree'])
             else:
                 commit_id = 'HEAD'
-            io.log_info('creating zip using git archive HEAD')
+            io.log_info('creating zip using git archive ' + commit_id)
+                            
             stdout, stderr, exitcode = self._run_cmd(
                 ['git', 'archive', '-v', '--format=zip',
                  '-o', location, commit_id])
             io.log_info('git archive output: ' + stderr)
+
+            project_root = os.getcwd()
+            # individually zip submodules if there are any
+            stdout, stderr, exitcode = _run_cmd(
+                ['git', 'submodule', 'foreach', '--recursive'])
+            for index, line in enumerate(stdout.splitlines()):
+                submodule_dir = line.split(' ')[1].strip('\'')
+                os.chdir(os.path.join(project_root, submodule_dir))
+                do_zip_submodule(location, location + '_' + str(index), staged=staged,
+                                 submodule_dir=submodule_dir)
         finally:
             os.chdir(cwd)
 

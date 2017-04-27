@@ -414,6 +414,16 @@ def delete_app_versions():
         os.chdir(cwd)
 
 
+def zip_append_archieve(target_file, source_file):
+    zip_source = zipfile.ZipFile(source_file, 'r')
+    zip_target = zipfile.ZipFile(target_file, 'a')
+    for filename in zip_source.namelist():
+        zf = zip_source.read(filename)
+        zip_target.writestr(filename, zf)
+    zip_target.close()
+    zip_source.close()
+
+
 def zip_up_folder(directory, location, ignore_list=None):
     cwd = os.getcwd()
     try:
