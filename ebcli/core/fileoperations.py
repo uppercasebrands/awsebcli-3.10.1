@@ -414,7 +414,7 @@ def delete_app_versions():
         os.chdir(cwd)
 
 
-def zip_append_archieve(target_file, source_file):
+def zip_append_archive(target_file, source_file):
     zip_source = zipfile.ZipFile(source_file, 'r')
     zip_target = zipfile.ZipFile(target_file, 'a')
     for filename in zip_source.namelist():

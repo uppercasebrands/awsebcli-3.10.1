@@ -223,14 +223,14 @@ class Git(SourceControl):
 
     def do_zip_submodule(self, main_location, sub_location, staged=False, submodule_dir=None):
         if staged:
-            commit_id, stderr, exitcode = _run_cmd(
+            commit_id, stderr, exitcode = self._run_cmd(
                 ['git', 'write-tree'])
         else:
             commit_id = 'HEAD'
         io.log_info('creating zip using git submodule archive ' + commit_id)
 
         # individually zip submodules if there are any
-        stdout, stderr, exitcode = _run_cmd(
+        stdout, stderr, exitcode = self._run_cmd(
             ['git', 'archive', '-v', '--format=zip',
              '--prefix', os.path.join(submodule_dir, ''),
              '-o', sub_location, commit_id])
@@ -260,13 +260,13 @@ class Git(SourceControl):
 
             project_root = os.getcwd()
             # individually zip submodules if there are any
-            stdout, stderr, exitcode = _run_cmd(
+            stdout, stderr, exitcode = self._run_cmd(
                 ['git', 'submodule', 'foreach', '--recursive'])
             for index, line in enumerate(stdout.splitlines()):
                 submodule_dir = line.split(' ')[1].strip('\'')
                 os.chdir(os.path.join(project_root, submodule_dir))
-                do_zip_submodule(location, location + '_' + str(index), staged=staged,
-                                 submodule_dir=submodule_dir)
+                self.do_zip_submodule(location, location + '_' + str(index), staged=staged,
+                                      submodule_dir=submodule_dir)
         finally:
             os.chdir(cwd)
 
